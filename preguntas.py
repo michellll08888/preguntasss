@@ -3,9 +3,12 @@ from tkinter import messagebox
 
 # --- Definición de Colores ---
 COLOR_FONDO_VENTANA = "#81A4E6"
-COLOR_FONDO_BOTON = "#0B2F73"
-COLOR_TEXTO_BOTON = "white"
-COLOR_FONDO_FINAL = "#444487" # Usado en la función de resultado (Aunque messagebox ignora este)
+COLOR_FONDO_BOTON = "#2E549B"
+COLOR_TEXTO_BOTON = "#000000"
+COLOR_FONDO_FINAL = "#444487" 
+COLOR_SELECCION_RADIO = "#5D8C80"
+COLOR_FONDO_RESPUESTA = "#81A4E6" # Ajustado para que sea el mismo que el fondo de ventana para mejorar la legibilidad del texto negro
+COLOR_TEXTO_RESPUESTA = "black"  # ¡NUEVO! Color de texto de respuesta en negro
 
 # --- Estructura de Datos del Cuestionario (Sin Cambios) ---
 preguntas = [
@@ -117,7 +120,6 @@ class CuestionarioApp:
         master.title("Cuestionario de Criptografía 🔐")
         master.geometry("600x400")
         
-        # Aplicamos el color de fondo a la ventana principal
         master.config(bg=COLOR_FONDO_VENTANA)
         
         self.puntuacion = 0
@@ -127,7 +129,6 @@ class CuestionarioApp:
         self.respuesta_seleccionada = tk.StringVar() 
         self.respuesta_seleccionada.set(None)
         
-        # Configuramos la etiqueta con el color de fondo
         self.label_pregunta = tk.Label(master, 
                                        text="", 
                                        wraplength=550, 
@@ -136,11 +137,9 @@ class CuestionarioApp:
                                        bg=COLOR_FONDO_VENTANA)
         self.label_pregunta.pack(pady=20)
         
-        # Configuramos el frame contenedor de opciones con el color de fondo
         self.opciones_frame = tk.Frame(master, bg=COLOR_FONDO_VENTANA)
         self.opciones_frame.pack(pady=10)
         
-        # Configuramos el botón con el color de fondo y texto
         self.boton_siguiente = tk.Button(master, 
                                          text="Siguiente Pregunta", 
                                          command=self.verificar_y_cargar_siguiente,
@@ -165,7 +164,7 @@ class CuestionarioApp:
         
         self.respuesta_seleccionada.set(None) 
 
-        # Crea los nuevos RadioButtons (es importante establecer el fondo para que coincida con el Frame)
+        # Crea los nuevos RadioButtons
         for clave, texto_opcion in pregunta_info['opciones'].items():
             rb = tk.Radiobutton(self.opciones_frame, 
                                 text=f"{clave}) {texto_opcion}", 
@@ -174,9 +173,11 @@ class CuestionarioApp:
                                 justify=tk.LEFT,
                                 anchor="w", 
                                 font=("Arial", 10),
-                                bg=COLOR_FONDO_VENTANA, # Color de fondo del RadioButton
-                                selectcolor="#CCCCCC") # Color cuando está seleccionado
-            rb.pack(anchor="w", padx=20, pady=5, fill='x')
+                                bg=COLOR_FONDO_RESPUESTA,         # Fondo ajustado para contraste (es igual que el de la ventana)
+                                fg=COLOR_TEXTO_RESPUESTA,         # ¡Color del texto en negro!
+                                activebackground=COLOR_FONDO_RESPUESTA, 
+                                selectcolor=COLOR_SELECCION_RADIO)
+            rb.pack(anchor="w", padx=5, pady=5, fill='x')
             
         if self.pregunta_actual_idx == len(self.preguntas_data) - 1:
             self.boton_siguiente.config(text="Finalizar Cuestionario")
@@ -189,8 +190,6 @@ class CuestionarioApp:
         respuesta = self.respuesta_seleccionada.get()
         
         if respuesta == "None":
-            # Las cajas de mensaje de Tkinter (messagebox) utilizan los colores predeterminados 
-            # del sistema operativo y no pueden ser estilizadas con facilidad.
             messagebox.showwarning("Advertencia", "Por favor, selecciona una opción antes de continuar.")
             return
 
@@ -203,17 +202,44 @@ class CuestionarioApp:
 
 
     def mostrar_resultado_final(self):
-        """Muestra el resultado final y cierra la aplicación."""
+        """Muestra el resultado final usando una ventana Toplevel para aplicar el color."""
+        self.master.withdraw() 
         
-        # Nota: Para aplicar el color #444487 a los resultados, necesitaríamos crear 
-        # una ventana Toplevel personalizada, ya que 'messagebox.showinfo' no permite 
-        # cambiar el color de fondo. Para mantener la simplicidad, usaremos el messagebox
-        # estándar y lo notificaremos.
-        mensaje = (f"¡Cuestionario Terminado! 🎉\n\n"
-                   f"Tu puntuación final es: {self.puntuacion} de {len(self.preguntas_data)}.")
+        ventana_resultado = tk.Toplevel(self.master)
+        ventana_resultado.title("Resultados")
+        ventana_resultado.geometry("400x200")
         
-        messagebox.showinfo("Resultados", mensaje)
-        self.master.destroy()
+        ventana_resultado.config(bg=COLOR_FONDO_FINAL)
+        
+        def cerrar_todo():
+            ventana_resultado.destroy()
+            self.master.destroy()
+
+        # Etiqueta de título
+        tk.Label(ventana_resultado, 
+                 text="¡Cuestionario Terminado! 🎉", 
+                 font=("Arial", 18, "bold"),
+                 bg=COLOR_FONDO_FINAL,
+                 fg="white").pack(pady=(20, 10))
+
+        # Etiqueta de puntuación
+        mensaje = f"Tu puntuación final es: {self.puntuacion} de {len(self.preguntas_data)}."
+        tk.Label(ventana_resultado, 
+                 text=mensaje, 
+                 font=("Arial", 14),
+                 bg=COLOR_FONDO_FINAL,
+                 fg="white").pack(pady=10)
+        
+        # Botón para cerrar
+        tk.Button(ventana_resultado, 
+                  text="Cerrar", 
+                  command=cerrar_todo,
+                  bg=COLOR_FONDO_BOTON,
+                  fg="white").pack(pady=10)
+
+        ventana_resultado.transient(self.master)
+        ventana_resultado.grab_set()
+        self.master.wait_window(ventana_resultado)
 
 # --- Bloque principal para iniciar la aplicación ---
 if __name__ == "__main__":
